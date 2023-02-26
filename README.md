@@ -1,4 +1,4 @@
-# PaletteApplier
+# Palette Applier
 
 A super basic palette applier with support for .pal files and pngs.
 I made this on a whim, while procrastinating more important work, i think its a pretty cool afternoon project though, and was a good exercise of my learning skills.
@@ -7,6 +7,13 @@ I think the largest limitation of this program is that it works best for use wit
 Maybe I'll revisit this with a GPU in the future!
 
 It does best with low bit color palettes and pixel art images, however you can get pretty decently high images processed in a few seconds, though again, its not what this program was made for.
+
+You can get palettes at (not sponsored)
+https://lospec.com/palette-list
+
+The .pal files I added support for seem to only exist from this project
+https://captain4lk.itch.io/slk-img2pixel
+so theres intercompatibility in some ways
 
 https://user-images.githubusercontent.com/71297845/221396859-c9858612-bf5f-4492-9722-efce5476a779.mp4
 
