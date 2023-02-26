@@ -8,8 +8,8 @@ namespace PaletteApplier
         public static void Main(string[] args)
         {
             Palette_Applier paletteApplier = new Palette_Applier();
-
             paletteApplier.ShowDialog();
+            //Application.Run(paletteApplier);
         }
     }
 }

@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
-using MoreLinq;
 
 namespace PaletteApplier
 {
     public partial class Palette_Applier : Form
     {
-        public (Color[], int, int, Bitmap) PaletteTuple;
-        public (Color[], int, int, Bitmap) ImageTuple;
-        public MapTypes MapType = MapTypes.Distance;
+        private (Color[], int, int, Bitmap) PaletteTuple;
+        private (Color[], int, int, Bitmap) ImageTuple;
+        private MapTypes MapType = MapTypes.Distance;
 
 
-        Color darkest = ColorTranslator.FromHtml("#233142");
-        Color dark = ColorTranslator.FromHtml("#455D7A");
-        Color light = ColorTranslator.FromHtml("#F95959");
-        Color lightest = ColorTranslator.FromHtml("#FACF5A");
+        private Color darkest = ColorTranslator.FromHtml("#233142");
+        private Color dark = ColorTranslator.FromHtml("#455D7A");
+        private Color light = ColorTranslator.FromHtml("#F95959");
+        private Color lightest = ColorTranslator.FromHtml("#FACF5A");
 
         public Palette_Applier()
         {
@@ -46,40 +43,25 @@ namespace PaletteApplier
             this.refreshButton.MouseLeave += (sender, args) => MouseExit(refreshButton);
 
             //this.ddFunctionType.SelectedIndexChanged += (sender, args) => ChangeFunctionType();
-                
+
             #endregion
+
+            //The Designer was being janky in jetbrains so i had to do this stuff manually
 
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
 
-
+            //Set the picture box stretch modes
             this.pbPalette.SizeMode = PictureBoxSizeMode.StretchImage;
             this.pbImage.SizeMode = PictureBoxSizeMode.StretchImage;
             this.pbResult.SizeMode = PictureBoxSizeMode.StretchImage;
 
-
             BackColor = darkest;
 
-
+            //Set the button colors
             SetColors(openPalette, dark, lightest);
             SetColors(openImage, dark, lightest);
             SetColors(saveImage, dark, lightest);
             SetColors(refreshButton, dark, lightest);
-            
-            //this.ddFunctionType.BackColor = dark;
-            //this.ddFunctionType.ForeColor = lightest;
-
-
-            //ddFunctionType.Items.Clear();
-            //Enum.GetNames(typeof(MapTypes)).ForEach(x =>
-            //{
-            //    ddFunctionType.Items.Add(x);
-            //});
-        }
-
-        private void ChangeFunctionType()
-        {
-            //int index = ddFunctionType.SelectedIndex;
-            //MapType = (MapTypes)index;
         }
 
         private void MouseOver(Button b)
@@ -99,9 +81,14 @@ namespace PaletteApplier
         }
 
 
+        /// <summary>
+        /// Opens the file open dialogue and allows for an palette to be opened
+        /// </summary>
         private void OpenPalette()
         {
             var p = PaletteApplierBackend.RequestImage(RequestTypes.Palette);
+
+            //We do this check so that if the user decides against opening the palette, it doesnt remove it
             if (p.Item4 != null)
             {
                 PaletteTuple = p;
@@ -109,10 +96,14 @@ namespace PaletteApplier
             }
         }
 
+        /// <summary>
+        /// Opens the file open dialogue and allows for an image to be opened
+        /// </summary>
         private void OpenImage()
         {
             var p = PaletteApplierBackend.RequestImage(RequestTypes.Image);
 
+            //We do this check so that if the user decides against opening the image, it doesnt remove it
             if (p.Item4 != null)
             {
                 ImageTuple = p;
@@ -120,6 +111,9 @@ namespace PaletteApplier
             }
         }
 
+        /// <summary>
+        /// Opens the file open dialogue and allows for the processed image to be saved
+        /// </summary>
         private void SaveImage()
         {
             if (IsReadyForProcessing())
@@ -128,6 +122,9 @@ namespace PaletteApplier
             }
         }
 
+        /// <summary>
+        /// Refreshes the preview, if i knew how, this is where i would downscale the bitmap before processing it
+        /// </summary>
         private void RefreshPreview()
         {
             if (IsReadyForProcessing())
@@ -136,6 +133,10 @@ namespace PaletteApplier
             }
         }
 
+        /// <summary>
+        /// Returns true if the image is ready to be processed
+        /// </summary>
+        /// <returns></returns>
         private bool IsReadyForProcessing()
         {
             return (PaletteTuple.Item4 != null && ImageTuple.Item4 != null);
