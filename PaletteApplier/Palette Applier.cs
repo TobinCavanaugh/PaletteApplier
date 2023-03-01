@@ -106,8 +106,12 @@ namespace PaletteApplier
             //We do this check so that if the user decides against opening the image, it doesnt remove it
             if (p.Item4 != null)
             {
+                var ds = PaletteApplierBackend.DownscaleColorArray(p.Item1, p.Item4.Width, p.Item4.Height);
+
+                var bm = PaletteApplierBackend.CopyColorArrayToBitmap(ds.Item1, ds.Item2, ds.Item3);
+
                 ImageTuple = p;
-                this.pbImage.Image = p.Item4;
+                this.pbImage.Image = bm;
             }
         }
 
@@ -129,7 +133,7 @@ namespace PaletteApplier
         {
             if (IsReadyForProcessing())
             {
-                this.pbResult.Image = PaletteApplierBackend.GetProcessedBitmap(PaletteTuple, ImageTuple, MapType);
+                this.pbResult.Image = PaletteApplierBackend.GetProcessedBitmap(PaletteTuple, ImageTuple, MapType, true);
             }
         }
 

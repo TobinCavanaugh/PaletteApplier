@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MoreLinq;
 
 namespace PaletteApplier
 {
@@ -80,7 +82,7 @@ namespace PaletteApplier
         /// <param name="rq">The type of image being requested</param>
         /// <returns>A tuple of the image colors, the width, the height, and the bitmap</returns>
         [STAThread]
-        public static (Color[], int, int, Bitmap) RequestImage(RequestTypes rq)
+        public static (Color[], int, int, Bitmap) RequestImage(RequestTypes rq, bool doDownscale = false)
         {
             OpenFileDialog paletteRequest = new OpenFileDialog();
 
@@ -111,7 +113,7 @@ namespace PaletteApplier
             }
             else
             {
-                return GetPaletteFromImage(rq, filPath);
+                return GetFromImage(rq, filPath);
             }
         }
 
@@ -173,12 +175,12 @@ namespace PaletteApplier
         }
 
         /// <summary>
-        /// Gets a palette from an image at filPath
+        /// Gets a palette or an image from an image at filPath
         /// </summary>
         /// <param name="rq">The request type, should it be read as a palette or as an image</param>
         /// <param name="filPath">The location of the image</param>
         /// <returns></returns>
-        private static (Color[], int, int, Bitmap) GetPaletteFromImage(RequestTypes rq, string filPath)
+        private static (Color[], int, int, Bitmap) GetFromImage(RequestTypes rq, string filPath)
         {
             Bitmap bitmap = new Bitmap(filPath);
 
@@ -252,7 +254,7 @@ namespace PaletteApplier
         /// <param name="width">The width of the bitmap</param>
         /// <param name="height">The height of the bitmap</param>
         /// <returns></returns>
-        private static unsafe Bitmap CopyColorArrayToBitmap(Color[] colors, int width, int height)
+        public static unsafe Bitmap CopyColorArrayToBitmap(Color[] colors, int width, int height)
         {
             Bitmap bitmap = new Bitmap(width, height);
 
@@ -276,12 +278,54 @@ namespace PaletteApplier
                 *ptr++ = (colors[i].A << 24) | (colors[i].R << 16) | (colors[i].G << 8) | colors[i].B;
             }
 
+            // Parallel.For(0, colors.Length, i =>
+            // {
+            //     //These bitwise offsets are specifically for Format32bppArgb, which i chose on a whim, so dont change this unless you know what you are doing
+            //     *ptr++ = (colors[i].A << 24) | (colors[i].R << 16) | (colors[i].G << 8) | colors[i].B;
+            //
+            // });
+
             //Unlock it
             bitmap.UnlockBits(dat);
 
             return bitmap;
         }
 
+        public static (Color[], int, int) DownscaleColorArray(Color[] oldPixels, int oldWidth, int oldHeight)
+        {
+            int newWidth = oldWidth / 2;
+            int newHeight = oldHeight / 2;
+            Color[] newPixels = new Color[newWidth * newHeight];
+            oldHeight /= 2;
+            oldWidth /= 2;
+            
+            for (int y = 0; y < oldHeight; y += 2)
+            {
+                for (int x = 0; x < oldWidth; x += 2)
+                {
+                    // Compute the index of the pixel in the old image
+                    int oldIndex = (y * 2) * (oldWidth * 2) + (x * 2);
+
+                    // Compute the index of the pixel in the new image
+                    int newIndex = y * newWidth + x;
+
+                    
+                    newPixels[newIndex] = oldPixels[oldIndex];
+                }
+            }
+
+
+            
+
+            if ((oldWidth * oldHeight) <= (DownscaleMaxWidth * DownscaleMaxWidth))
+            {
+                return (newPixels, oldWidth, oldHeight);
+            }
+
+            return DownscaleColorArray(newPixels, oldWidth, oldHeight);
+        }
+
+        private static int DownscaleMaxWidth = 256;
 
         /// <summary>
         /// Processes and returns the bitmap
@@ -291,24 +335,42 @@ namespace PaletteApplier
         /// <param name="mapType">The type of processing that is to be done</param>
         /// <returns></returns>
         public static Bitmap GetProcessedBitmap((Color[], int, int, Bitmap) paletteColors,
-            (Color[], int, int, Bitmap) imageColors, MapTypes mapType)
+            (Color[], int, int, Bitmap) imageColors, MapTypes mapType, bool doDownscale = false)
         {
-            var newCols = MapPaletteColorsToImageColors(paletteColors.Item1, imageColors.Item1, mapType);
+            Color[] newCols;
+
+            if (doDownscale)
+            {
+                if ((imageColors.Item2 * imageColors.Item3) >= (DownscaleMaxWidth * DownscaleMaxWidth))
+                {
+                    var img = DownscaleColorArray(imageColors.Item1, imageColors.Item2, imageColors.Item3);
+
+                    imageColors.Item1 = img.Item1;
+                    imageColors.Item2 = img.Item2;
+                    imageColors.Item3 = img.Item3;
+                }
+            }
+
+            Console.WriteLine(
+                $"Width = {imageColors.Item2}, Height = {imageColors.Item3}, pixels = {imageColors.Item1.Length}");
+
+            newCols = MapPaletteColorsToImageColors(paletteColors.Item1, imageColors.Item1, mapType);
+
             return CopyColorArrayToBitmap(newCols, imageColors.Item2, imageColors.Item3);
         }
     }
+}
 
-    public enum RequestTypes
-    {
-        Image,
-        Palette
-    }
+public enum RequestTypes
+{
+    Image,
+    Palette
+}
 
-    /// <summary>
-    /// The type of processing to be done, if you want to add things, add another enum value and do stuff in MapPaletteColorsToImageColors
-    /// </summary>
-    public enum MapTypes
-    {
-        Distance
-    }
+/// <summary>
+/// The type of processing to be done, if you want to add things, add another enum value and do stuff in MapPaletteColorsToImageColors
+/// </summary>
+public enum MapTypes
+{
+    Distance
 }
