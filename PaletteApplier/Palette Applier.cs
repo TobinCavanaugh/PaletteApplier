@@ -1,14 +1,19 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
+using System.IO;
+using System.Linq;
 using System.Windows.Forms;
+using MoreLinq;
+using Ookii.Dialogs.Wpf;
 
 namespace PaletteApplier
 {
     public partial class Palette_Applier : Form
     {
-        private (Color[], int, int, Bitmap) PaletteTuple;
-        private (Color[], int, int, Bitmap) ImageTuple;
-        private MapTypes MapType = MapTypes.Distance;
+        private ImageFile Palette;
+        private ImageFile Image;
 
+        private MapTypes MapType = MapTypes.Distance;
 
         private Color darkest = ColorTranslator.FromHtml("#233142");
         private Color dark = ColorTranslator.FromHtml("#455D7A");
@@ -21,26 +26,32 @@ namespace PaletteApplier
 
             #region Actions
 
-            this.openPalette.Click += (sender, args) => { OpenPalette(); };
+            this.bOpenPalette.Click += (sender, args) => { OpenPalette(); };
 
-            this.openImage.Click += (sender, args) => { OpenImage(); };
+            this.bOpenImage.Click += (sender, args) => { OpenImage(); };
 
-            this.saveImage.Click += (sender, args) => { SaveImage(); };
+            this.bSaveImage.Click += (sender, args) => { SaveImage(); };
 
-            this.refreshButton.Click += (sender, args) => { RefreshPreview(); };
+            this.bRefreshPreview.Click += (sender, args) => { RefreshPreview(); };
 
+            this.bBatchOpen.Click += (sender, args) => { LoadImagesBatch(); };
+            this.bSaveBatch.Click += (sender, args) => { SaveImagesBatch(); };
 
-            this.openPalette.MouseEnter += (sender, args) => MouseOver(openPalette);
-            this.openPalette.MouseLeave += (sender, args) => MouseExit(openPalette);
+            this.bOpenPalette.MouseEnter += (sender, args) => MouseOver(bOpenPalette);
+            this.bOpenPalette.MouseLeave += (sender, args) => MouseExit(bOpenPalette);
 
-            this.openImage.MouseEnter += (sender, args) => MouseOver(openImage);
-            this.openImage.MouseLeave += (sender, args) => MouseExit(openImage);
+            this.bOpenImage.MouseEnter += (sender, args) => MouseOver(bOpenImage);
+            this.bOpenImage.MouseLeave += (sender, args) => MouseExit(bOpenImage);
 
-            this.saveImage.MouseEnter += (sender, args) => MouseOver(saveImage);
-            this.saveImage.MouseLeave += (sender, args) => MouseExit(saveImage);
+            this.bSaveImage.MouseEnter += (sender, args) => MouseOver(bSaveImage);
+            this.bSaveImage.MouseLeave += (sender, args) => MouseExit(bSaveImage);
 
-            this.refreshButton.MouseEnter += (sender, args) => MouseOver(refreshButton);
-            this.refreshButton.MouseLeave += (sender, args) => MouseExit(refreshButton);
+            this.bRefreshPreview.MouseEnter += (sender, args) => MouseOver(bRefreshPreview);
+            this.bRefreshPreview.MouseLeave += (sender, args) => MouseExit(bRefreshPreview);
+
+            this.bBatchOpen.MouseEnter += (sender, args) => MouseOver(bRefreshPreview);
+            this.bBatchOpen.MouseLeave += (sender, args) => MouseExit(bRefreshPreview);
+
 
             //this.ddFunctionType.SelectedIndexChanged += (sender, args) => ChangeFunctionType();
 
@@ -58,10 +69,80 @@ namespace PaletteApplier
             BackColor = darkest;
 
             //Set the button colors
-            SetColors(openPalette, dark, lightest);
-            SetColors(openImage, dark, lightest);
-            SetColors(saveImage, dark, lightest);
-            SetColors(refreshButton, dark, lightest);
+            SetColors(bOpenPalette, dark, lightest);
+            SetColors(bOpenImage, dark, lightest);
+            SetColors(bSaveImage, dark, lightest);
+            SetColors(bRefreshPreview, dark, lightest);
+
+
+            llPreview.ForeColor = lightest;
+            llLoadedAmount.ForeColor = lightest;
+
+            //SetColors(lbPreview, dark, lightest);
+        }
+
+
+        private ImageFile[] BatchImages;
+
+
+        private void LoadImagesBatch()
+        {
+            VistaFolderBrowserDialog folderBrowserDialog = new VistaFolderBrowserDialog();
+
+            if (!folderBrowserDialog.ShowDialog().Value)
+            {
+                Console.WriteLine("failed");
+                return;
+            }
+
+            string directoryPath = folderBrowserDialog.SelectedPath;
+            string[] pngFiles = Directory.GetFiles(directoryPath)
+                .Where(f => (f.Contains(".bmp") || f.Contains(".jpg") || f.Contains(".png"))).ToArray();
+
+            llLoadedAmount.Text = $"{pngFiles.Length} images found and loaded!";
+
+            BatchImages = new ImageFile[pngFiles.Length];
+
+            for (int i = 0; i < pngFiles.Length; i++)
+            {
+                BatchImages[i] = PaletteApplierBackend.GetFromImage(RequestTypes.Image, pngFiles[i]);
+
+                var split = pngFiles[i].Split('/');
+                BatchImages[i].fileName = split[split.Length - 1];
+            }
+
+            Console.WriteLine(BatchImages.Length);
+        }
+
+        private void SaveImagesBatch()
+        {
+            if (Palette.bitMap == null)
+            {
+                var mb = MessageBox.Show("No Palette is assigned");
+                
+                return;
+            }
+            
+            
+            VistaFolderBrowserDialog saveFolderBrowserDialogue = new VistaFolderBrowserDialog();
+
+            if (!saveFolderBrowserDialogue.ShowDialog().Value)
+            {
+                Console.WriteLine("failed");
+                return;
+            }
+
+            string directoryPath = saveFolderBrowserDialogue.SelectedPath;
+            
+
+            if (BatchImages.Length > 0)
+            {
+                BatchImages.ForEach(x =>
+                {
+                    Console.WriteLine(directoryPath + x.fileName);
+                    PaletteApplierBackend.SaveImage(Palette, x, MapTypes.Distance, directoryPath + x.fileName);
+                });
+            }
         }
 
         private void MouseOver(Button b)
@@ -74,7 +155,7 @@ namespace PaletteApplier
             b.BackColor = dark;
         }
 
-        private void SetColors(Button b, Color _dark, Color _lightest)
+        private void SetColors(Control b, Color _dark, Color _lightest)
         {
             b.BackColor = _dark;
             b.ForeColor = _lightest;
@@ -89,10 +170,10 @@ namespace PaletteApplier
             var p = PaletteApplierBackend.RequestImage(RequestTypes.Palette);
 
             //We do this check so that if the user decides against opening the palette, it doesnt remove it
-            if (p.Item4 != null)
+            if (p.bitMap != null)
             {
-                PaletteTuple = p;
-                this.pbPalette.Image = p.Item4;
+                Palette = p;
+                this.pbPalette.Image = p.bitMap;
             }
         }
 
@@ -103,15 +184,22 @@ namespace PaletteApplier
         {
             var p = PaletteApplierBackend.RequestImage(RequestTypes.Image);
 
+            Console.WriteLine(p.colors.Length);
+
             //We do this check so that if the user decides against opening the image, it doesnt remove it
-            if (p.Item4 != null)
+            if (p.bitMap != null)
             {
-                var ds = PaletteApplierBackend.DownscaleColorArray(p.Item1, p.Item4.Width, p.Item4.Height);
+                Console.WriteLine("WAdawdawdadwdwa");
+                var ds = PaletteApplierBackend.DownscaleColorArray(p.colors, p.bitMap.Width, p.bitMap.Height);
 
                 var bm = PaletteApplierBackend.CopyColorArrayToBitmap(ds.Item1, ds.Item2, ds.Item3);
 
-                ImageTuple = p;
+                Image = p;
                 this.pbImage.Image = bm;
+            }
+            else
+            {
+                Console.WriteLine("no bitmap");
             }
         }
 
@@ -122,7 +210,7 @@ namespace PaletteApplier
         {
             if (IsReadyForProcessing())
             {
-                PaletteApplierBackend.SaveImage(PaletteTuple, ImageTuple, MapType);
+                PaletteApplierBackend.SaveImage(Palette, Image, MapType);
             }
         }
 
@@ -133,7 +221,7 @@ namespace PaletteApplier
         {
             if (IsReadyForProcessing())
             {
-                this.pbResult.Image = PaletteApplierBackend.GetProcessedBitmap(PaletteTuple, ImageTuple, MapType, true);
+                this.pbResult.Image = PaletteApplierBackend.GetProcessedBitmap(Palette, Image, MapType, true);
             }
         }
 
@@ -143,7 +231,7 @@ namespace PaletteApplier
         /// <returns></returns>
         private bool IsReadyForProcessing()
         {
-            return (PaletteTuple.Item4 != null && ImageTuple.Item4 != null);
+            return (Palette.bitMap != null && Image.bitMap != null);
         }
     }
 }

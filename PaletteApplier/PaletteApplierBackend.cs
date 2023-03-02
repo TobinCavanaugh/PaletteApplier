@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -82,7 +83,7 @@ namespace PaletteApplier
         /// <param name="rq">The type of image being requested</param>
         /// <returns>A tuple of the image colors, the width, the height, and the bitmap</returns>
         [STAThread]
-        public static (Color[], int, int, Bitmap) RequestImage(RequestTypes rq, bool doDownscale = false)
+        public static ImageFile RequestImage(RequestTypes rq, bool doDownscale = false)
         {
             OpenFileDialog paletteRequest = new OpenFileDialog();
 
@@ -100,7 +101,7 @@ namespace PaletteApplier
             //Failed to open file, or file wasnt chosen
             if (paletteRequest.ShowDialog() != DialogResult.OK)
             {
-                return (null, 0, 0, null);
+                return new ImageFile();
             }
 
 
@@ -122,7 +123,7 @@ namespace PaletteApplier
         /// </summary>
         /// <param name="filPath">The path of the .pal file</param>
         /// <returns>A tuple of the image colors, the width, the height, and the bitmap</returns>
-        private static (Color[], int, int, Bitmap) GetPaletteFromPal(string filPath)
+        private static ImageFile GetPaletteFromPal(string filPath)
         {
             /*
              * Example .pal file (line numbers added for clarity)
@@ -155,7 +156,11 @@ namespace PaletteApplier
                 colors.Add(c);
             }
 
-            return (colors.ToArray(), bitmap.Width, bitmap.Height, bitmap);
+            var s = filPath.Split('/');
+            var name = s[s.Length - 1];
+
+            return new ImageFile(colors.ToArray(), bitmap.Width, bitmap.Height, bitmap, name);
+            //return (colors.ToArray(), bitmap.Width, bitmap.Height, bitmap, name);
         }
 
         /// <summary>
@@ -180,7 +185,7 @@ namespace PaletteApplier
         /// <param name="rq">The request type, should it be read as a palette or as an image</param>
         /// <param name="filPath">The location of the image</param>
         /// <returns></returns>
-        private static (Color[], int, int, Bitmap) GetFromImage(RequestTypes rq, string filPath)
+        public static ImageFile GetFromImage(RequestTypes rq, string filPath)
         {
             Bitmap bitmap = new Bitmap(filPath);
 
@@ -211,7 +216,14 @@ namespace PaletteApplier
                 }
             }
 
-            return (paletteColors.ToArray(), bitmap.Width, bitmap.Height, bitmap);
+            var s = filPath.Split('/');
+            var name = s[s.Length - 1];
+
+            Console.WriteLine(paletteColors.ToArray().Length);
+
+            return new ImageFile(paletteColors.ToArray(), bitmap.Width, bitmap.Height, bitmap, name);
+
+            //return (paletteColors.ToArray(), bitmap.Width, bitmap.Height, bitmap, name);
         }
 
         /// <summary>
@@ -220,9 +232,19 @@ namespace PaletteApplier
         /// <param name="paletteColors">The palette colors used to color the image</param>
         /// <param name="imageColors">All the colors of the image</param>
         /// <param name="mapType">The type of processing we do</param>
-        public static void SaveImage((Color[], int, int, Bitmap) paletteColors, (Color[], int, int, Bitmap) imageColors,
-            MapTypes mapType)
+        public static void SaveImage(ImageFile paletteColors, ImageFile imageColors,
+            MapTypes mapType, string fileLocation = "")
         {
+            if (fileLocation != "")
+            {
+                //Grab the processed bitmap
+                var bm = GetProcessedBitmap(paletteColors, imageColors, mapType);
+
+                //Save that to the harddrive, if we wanted another image format we would put it here
+                bm.Save(fileLocation, ImageFormat.Png);
+                Console.WriteLine("Saved");
+            }
+
             //Currently this is set to only save as PNG, however adding JPG etc support is easy
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "PNG files (*.png)|*.png|All files (*.*)|*.*";
@@ -295,27 +317,28 @@ namespace PaletteApplier
         {
             int newWidth = oldWidth / 2;
             int newHeight = oldHeight / 2;
+
             Color[] newPixels = new Color[newWidth * newHeight];
-            oldHeight /= 2;
-            oldWidth /= 2;
-            
-            for (int y = 0; y < oldHeight; y += 2)
+
+            for (int y = 0; y < newHeight; y += 1)
             {
-                for (int x = 0; x < oldWidth; x += 2)
+                for (int x = 0; x < newWidth; x += 1)
                 {
                     // Compute the index of the pixel in the old image
-                    int oldIndex = (y * 2) * (oldWidth * 2) + (x * 2);
+                    int oldIndex = (y * 2) * (oldWidth) + (x * 2);
 
                     // Compute the index of the pixel in the new image
                     int newIndex = y * newWidth + x;
 
-                    
                     newPixels[newIndex] = oldPixels[oldIndex];
                 }
             }
 
+            oldWidth /= 2;
+            oldHeight /= 2;
 
-            
+
+            Console.WriteLine($"{newWidth} {newHeight}");
 
             if ((oldWidth * oldHeight) <= (DownscaleMaxWidth * DownscaleMaxWidth))
             {
@@ -325,7 +348,7 @@ namespace PaletteApplier
             return DownscaleColorArray(newPixels, oldWidth, oldHeight);
         }
 
-        private static int DownscaleMaxWidth = 256;
+        private static int DownscaleMaxWidth = 128;
 
         /// <summary>
         /// Processes and returns the bitmap
@@ -334,30 +357,48 @@ namespace PaletteApplier
         /// <param name="imageColors">The image to be colored</param>
         /// <param name="mapType">The type of processing that is to be done</param>
         /// <returns></returns>
-        public static Bitmap GetProcessedBitmap((Color[], int, int, Bitmap) paletteColors,
-            (Color[], int, int, Bitmap) imageColors, MapTypes mapType, bool doDownscale = false)
+        public static Bitmap GetProcessedBitmap(ImageFile paletteColors,
+            ImageFile imageColors, MapTypes mapType, bool doDownscale = false)
         {
             Color[] newCols;
 
             if (doDownscale)
             {
-                if ((imageColors.Item2 * imageColors.Item3) >= (DownscaleMaxWidth * DownscaleMaxWidth))
+                if ((imageColors.width * imageColors.height) >= (DownscaleMaxWidth * DownscaleMaxWidth))
                 {
-                    var img = DownscaleColorArray(imageColors.Item1, imageColors.Item2, imageColors.Item3);
+                    var img = DownscaleColorArray(imageColors.colors, imageColors.width, imageColors.height);
 
-                    imageColors.Item1 = img.Item1;
-                    imageColors.Item2 = img.Item2;
-                    imageColors.Item3 = img.Item3;
+                    imageColors.colors = img.Item1;
+                    imageColors.width = img.Item2;
+                    imageColors.height = img.Item3;
                 }
             }
 
             Console.WriteLine(
-                $"Width = {imageColors.Item2}, Height = {imageColors.Item3}, pixels = {imageColors.Item1.Length}");
+                $"Width = {imageColors.width}, Height = {imageColors.height}, pixels = {imageColors.colors.Length}");
 
-            newCols = MapPaletteColorsToImageColors(paletteColors.Item1, imageColors.Item1, mapType);
+            newCols = MapPaletteColorsToImageColors(paletteColors.colors, imageColors.colors, mapType);
 
-            return CopyColorArrayToBitmap(newCols, imageColors.Item2, imageColors.Item3);
+            return CopyColorArrayToBitmap(newCols, imageColors.width, imageColors.height);
         }
+    }
+}
+
+public struct ImageFile
+{
+    public Color[] colors;
+    public int width;
+    public int height;
+    public Bitmap bitMap;
+    public string fileName;
+
+    public ImageFile(Color[] colors, int width, int height, Bitmap bitMap, string fileName) : this()
+    {
+        this.colors = colors;
+        this.width = width;
+        this.height = height;
+        this.bitMap = bitMap;
+        this.fileName = fileName;
     }
 }
 

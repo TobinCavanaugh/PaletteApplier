@@ -21,3 +21,6 @@ D:\Repos\PaletteApplier\PaletteApplier\obj\Release\PaletteApplier.csproj.CoreCom
 D:\Repos\PaletteApplier\PaletteApplier\obj\Release\PaletteApplier.csproj.CopyComplete
 D:\Repos\PaletteApplier\PaletteApplier\obj\Release\PaletteApplier.exe
 D:\Repos\PaletteApplier\PaletteApplier\obj\Release\PaletteApplier.pdb
+D:\Repos\PaletteApplier\PaletteApplier\bin\Release\Ookii.Dialogs.Wpf.dll
+D:\Repos\PaletteApplier\PaletteApplier\bin\Release\Ookii.Dialogs.Wpf.pdb
+D:\Repos\PaletteApplier\PaletteApplier\bin\Release\Ookii.Dialogs.Wpf.xml

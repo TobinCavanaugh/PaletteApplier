@@ -31,26 +31,30 @@ namespace PaletteApplier
         /// </summary>
         private void InitializeComponent()
         {
-            this.openPalette = new System.Windows.Forms.Button();
+            this.bOpenPalette = new System.Windows.Forms.Button();
             this.pbPalette = new System.Windows.Forms.PictureBox();
-            this.openImage = new System.Windows.Forms.Button();
+            this.bOpenImage = new System.Windows.Forms.Button();
             this.pbImage = new System.Windows.Forms.PictureBox();
             this.pbResult = new System.Windows.Forms.PictureBox();
-            this.saveImage = new System.Windows.Forms.Button();
-            this.refreshButton = new System.Windows.Forms.Button();
+            this.bSaveImage = new System.Windows.Forms.Button();
+            this.bRefreshPreview = new System.Windows.Forms.Button();
+            this.llPreview = new System.Windows.Forms.Label();
+            this.bBatchOpen = new System.Windows.Forms.Button();
+            this.bSaveBatch = new System.Windows.Forms.Button();
+            this.llLoadedAmount = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pbPalette)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbResult)).BeginInit();
             this.SuspendLayout();
             // 
-            // openPalette
+            // bOpenPalette
             // 
-            this.openPalette.Location = new System.Drawing.Point(12, 12);
-            this.openPalette.Name = "openPalette";
-            this.openPalette.Size = new System.Drawing.Size(218, 60);
-            this.openPalette.TabIndex = 0;
-            this.openPalette.Text = "Open Palette";
-            this.openPalette.UseVisualStyleBackColor = true;
+            this.bOpenPalette.Location = new System.Drawing.Point(12, 12);
+            this.bOpenPalette.Name = "bOpenPalette";
+            this.bOpenPalette.Size = new System.Drawing.Size(218, 60);
+            this.bOpenPalette.TabIndex = 0;
+            this.bOpenPalette.Text = "Open Palette";
+            this.bOpenPalette.UseVisualStyleBackColor = true;
             // 
             // pbPalette
             // 
@@ -60,14 +64,14 @@ namespace PaletteApplier
             this.pbPalette.TabIndex = 1;
             this.pbPalette.TabStop = false;
             // 
-            // openImage
+            // bOpenImage
             // 
-            this.openImage.Location = new System.Drawing.Point(12, 146);
-            this.openImage.Name = "openImage";
-            this.openImage.Size = new System.Drawing.Size(218, 60);
-            this.openImage.TabIndex = 1;
-            this.openImage.Text = "Open Image";
-            this.openImage.UseVisualStyleBackColor = true;
+            this.bOpenImage.Location = new System.Drawing.Point(12, 146);
+            this.bOpenImage.Name = "bOpenImage";
+            this.bOpenImage.Size = new System.Drawing.Size(218, 60);
+            this.bOpenImage.TabIndex = 1;
+            this.bOpenImage.Text = "Open Image";
+            this.bOpenImage.UseVisualStyleBackColor = true;
             // 
             // pbImage
             // 
@@ -85,37 +89,79 @@ namespace PaletteApplier
             this.pbResult.TabIndex = 4;
             this.pbResult.TabStop = false;
             // 
-            // saveImage
+            // bSaveImage
             // 
-            this.saveImage.Location = new System.Drawing.Point(12, 348);
-            this.saveImage.Name = "saveImage";
-            this.saveImage.Size = new System.Drawing.Size(218, 60);
-            this.saveImage.TabIndex = 3;
-            this.saveImage.Text = "Save Image";
-            this.saveImage.UseVisualStyleBackColor = true;
+            this.bSaveImage.Location = new System.Drawing.Point(12, 348);
+            this.bSaveImage.Name = "bSaveImage";
+            this.bSaveImage.Size = new System.Drawing.Size(218, 60);
+            this.bSaveImage.TabIndex = 3;
+            this.bSaveImage.Text = "Save Image";
+            this.bSaveImage.UseVisualStyleBackColor = true;
             // 
-            // refreshButton
+            // bRefreshPreview
             // 
-            this.refreshButton.Location = new System.Drawing.Point(12, 282);
-            this.refreshButton.Name = "refreshButton";
-            this.refreshButton.Size = new System.Drawing.Size(218, 60);
-            this.refreshButton.TabIndex = 2;
-            this.refreshButton.Text = "Refresh Preview";
-            this.refreshButton.UseVisualStyleBackColor = true;
+            this.bRefreshPreview.Location = new System.Drawing.Point(370, 285);
+            this.bRefreshPreview.Name = "bRefreshPreview";
+            this.bRefreshPreview.Size = new System.Drawing.Size(218, 60);
+            this.bRefreshPreview.TabIndex = 2;
+            this.bRefreshPreview.Text = "Refresh Preview";
+            this.bRefreshPreview.UseVisualStyleBackColor = true;
+            // 
+            // llPreview
+            // 
+            this.llPreview.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.llPreview.Location = new System.Drawing.Point(370, 348);
+            this.llPreview.Name = "llPreview";
+            this.llPreview.Size = new System.Drawing.Size(218, 60);
+            this.llPreview.TabIndex = 5;
+            this.llPreview.Text = "*Preview images are downscaled";
+            this.llPreview.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // bBatchOpen
+            // 
+            this.bBatchOpen.Location = new System.Drawing.Point(370, 12);
+            this.bBatchOpen.Name = "bBatchOpen";
+            this.bBatchOpen.Size = new System.Drawing.Size(218, 60);
+            this.bBatchOpen.TabIndex = 6;
+            this.bBatchOpen.Text = "Open Image Folder (For Batch)";
+            this.bBatchOpen.UseVisualStyleBackColor = true;
+            // 
+            // bSaveBatch
+            // 
+            this.bSaveBatch.Location = new System.Drawing.Point(370, 146);
+            this.bSaveBatch.Name = "bSaveBatch";
+            this.bSaveBatch.Size = new System.Drawing.Size(218, 60);
+            this.bSaveBatch.TabIndex = 7;
+            this.bSaveBatch.Text = "Save Images (For Batch)";
+            this.bSaveBatch.UseVisualStyleBackColor = true;
+            // 
+            // llLoadedAmount
+            // 
+            this.llLoadedAmount.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.llLoadedAmount.Location = new System.Drawing.Point(370, 75);
+            this.llLoadedAmount.Name = "llLoadedAmount";
+            this.llLoadedAmount.Size = new System.Drawing.Size(218, 60);
+            this.llLoadedAmount.TabIndex = 8;
+            this.llLoadedAmount.Text = "152 Images Loaded";
+            this.llLoadedAmount.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Palette_Applier
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(373, 428);
-            this.Controls.Add(this.refreshButton);
-            this.Controls.Add(this.saveImage);
+            this.ClientSize = new System.Drawing.Size(604, 428);
+            this.Controls.Add(this.llLoadedAmount);
+            this.Controls.Add(this.bSaveBatch);
+            this.Controls.Add(this.bBatchOpen);
+            this.Controls.Add(this.llPreview);
+            this.Controls.Add(this.bRefreshPreview);
+            this.Controls.Add(this.bSaveImage);
             this.Controls.Add(this.pbResult);
             this.Controls.Add(this.pbImage);
-            this.Controls.Add(this.openImage);
+            this.Controls.Add(this.bOpenImage);
             this.Controls.Add(this.pbPalette);
-            this.Controls.Add(this.openPalette);
+            this.Controls.Add(this.bOpenPalette);
             this.Name = "Palette_Applier";
             this.Text = "Palette_Applier";
             ((System.ComponentModel.ISupportInitialize)(this.pbPalette)).EndInit();
@@ -124,18 +170,26 @@ namespace PaletteApplier
             this.ResumeLayout(false);
         }
 
+        private System.Windows.Forms.Label llLoadedAmount;
+
+        private System.Windows.Forms.Button bSaveBatch;
+
+        private System.Windows.Forms.Button bBatchOpen;
+
+        private System.Windows.Forms.Label llPreview;
+
         private System.Windows.Forms.ComboBox comboBox1;
 
-        private System.Windows.Forms.Button refreshButton;
+        private System.Windows.Forms.Button bRefreshPreview;
 
-        private System.Windows.Forms.Button openPalette;
+        private System.Windows.Forms.Button bOpenPalette;
 
-        private System.Windows.Forms.Button saveImage;
+        private System.Windows.Forms.Button bSaveImage;
 
         private System.Windows.Forms.PictureBox pbImage;
         private System.Windows.Forms.PictureBox pbResult;
 
-        private System.Windows.Forms.Button openImage;
+        private System.Windows.Forms.Button bOpenImage;
 
         private System.Windows.Forms.PictureBox pbPalette;
 
