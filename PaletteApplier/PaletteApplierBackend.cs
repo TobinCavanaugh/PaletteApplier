@@ -240,9 +240,16 @@ namespace PaletteApplier
                 //Grab the processed bitmap
                 var bm = GetProcessedBitmap(paletteColors, imageColors, mapType);
 
+                GC.Collect();
+                
+                Console.WriteLine(fileLocation);
                 //Save that to the harddrive, if we wanted another image format we would put it here
+                
                 bm.Save(fileLocation, ImageFormat.Png);
+                
                 Console.WriteLine("Saved");
+
+                return;
             }
 
             //Currently this is set to only save as PNG, however adding JPG etc support is easy

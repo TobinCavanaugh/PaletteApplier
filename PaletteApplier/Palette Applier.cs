@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using MoreLinq;
 using Ookii.Dialogs.Wpf;
@@ -49,8 +51,11 @@ namespace PaletteApplier
             this.bRefreshPreview.MouseEnter += (sender, args) => MouseOver(bRefreshPreview);
             this.bRefreshPreview.MouseLeave += (sender, args) => MouseExit(bRefreshPreview);
 
-            this.bBatchOpen.MouseEnter += (sender, args) => MouseOver(bRefreshPreview);
-            this.bBatchOpen.MouseLeave += (sender, args) => MouseExit(bRefreshPreview);
+            this.bBatchOpen.MouseEnter += (sender, args) => MouseOver(bBatchOpen);
+            this.bBatchOpen.MouseLeave += (sender, args) => MouseExit(bBatchOpen);
+
+            this.bSaveBatch.MouseEnter += (sender, args) => MouseOver(bSaveBatch);
+            this.bSaveBatch.MouseLeave += (sender, args) => MouseExit(bSaveBatch);
 
 
             //this.ddFunctionType.SelectedIndexChanged += (sender, args) => ChangeFunctionType();
@@ -73,6 +78,8 @@ namespace PaletteApplier
             SetColors(bOpenImage, dark, lightest);
             SetColors(bSaveImage, dark, lightest);
             SetColors(bRefreshPreview, dark, lightest);
+            SetColors(bBatchOpen, dark, lightest);
+            SetColors(bSaveBatch, dark, lightest);
 
 
             llPreview.ForeColor = lightest;
@@ -95,6 +102,8 @@ namespace PaletteApplier
                 return;
             }
 
+            Console.WriteLine(folderBrowserDialog.SelectedPath);
+
             string directoryPath = folderBrowserDialog.SelectedPath;
             string[] pngFiles = Directory.GetFiles(directoryPath)
                 .Where(f => (f.Contains(".bmp") || f.Contains(".jpg") || f.Contains(".png"))).ToArray();
@@ -107,11 +116,10 @@ namespace PaletteApplier
             {
                 BatchImages[i] = PaletteApplierBackend.GetFromImage(RequestTypes.Image, pngFiles[i]);
 
-                var split = pngFiles[i].Split('/');
+                var split = pngFiles[i].Split('\\');
                 BatchImages[i].fileName = split[split.Length - 1];
+                Console.WriteLine(BatchImages[i].fileName);
             }
-
-            Console.WriteLine(BatchImages.Length);
         }
 
         private void SaveImagesBatch()
@@ -119,11 +127,11 @@ namespace PaletteApplier
             if (Palette.bitMap == null)
             {
                 var mb = MessageBox.Show("No Palette is assigned");
-                
+
                 return;
             }
-            
-            
+
+
             VistaFolderBrowserDialog saveFolderBrowserDialogue = new VistaFolderBrowserDialog();
 
             if (!saveFolderBrowserDialogue.ShowDialog().Value)
@@ -133,16 +141,29 @@ namespace PaletteApplier
             }
 
             string directoryPath = saveFolderBrowserDialogue.SelectedPath;
-            
 
-            if (BatchImages.Length > 0)
+
+            Parallel.For(0, BatchImages.Length, i =>
             {
-                BatchImages.ForEach(x =>
-                {
-                    Console.WriteLine(directoryPath + x.fileName);
-                    PaletteApplierBackend.SaveImage(Palette, x, MapTypes.Distance, directoryPath + x.fileName);
-                });
+                var x = BatchImages[i];
+                //Path isnt including lowest level folder
+                string path = (directoryPath + @"\" + x.fileName);
+                PaletteApplierBackend.SaveImage(Palette, x, MapTypes.Distance, path);
+            });
+
+            if (MessageBox.Show("Completed export, opening folder", "", MessageBoxButtons.OK) == DialogResult.OK)
+            {
+                Process.Start($@"{directoryPath}");
             }
+
+            // if (BatchImages.Length > 0)
+            // {
+            //     BatchImages.ForEach(x =>
+            //     {
+            //         Console.WriteLine(directoryPath + x.fileName);
+            //         PaletteApplierBackend.SaveImage(Palette, x, MapTypes.Distance, Path.Combine(directoryPath, x.fileName));
+            //     });
+            // }
         }
 
         private void MouseOver(Button b)
