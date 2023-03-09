@@ -142,7 +142,7 @@ namespace PaletteApplier
             this.llLoadedAmount.Name = "llLoadedAmount";
             this.llLoadedAmount.Size = new System.Drawing.Size(218, 60);
             this.llLoadedAmount.TabIndex = 8;
-            this.llLoadedAmount.Text = "152 Images Loaded";
+            this.llLoadedAmount.Text = "No images loaded";
             this.llLoadedAmount.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Palette_Applier
